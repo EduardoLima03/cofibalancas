@@ -24,14 +24,12 @@ class Conferencia extends Model
     ];
 
     protected $casts = [
-        'data_conferencia' => 'date',
+        'data_conferencia' => 'datetime',
         'peso_esperado' => 'float',
         'peso_real' => 'float',
         'diferenca' => 'float',
         'tolerancia_usada' => 'float',
     ];
-
-    protected $dates = ['data_conferencia'];
 
     public function loja(): BelongsTo
     {
