@@ -44,7 +44,7 @@ class UserController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $data['is_active'] = $request->boolean('is_active', true);
+        $data['is_active'] = $request->boolean('is_active');
 
         if (! $request->filled('email')) {
             $data['email'] = '';
@@ -81,7 +81,7 @@ class UserController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $data['is_active'] = $request->boolean('is_active', true);
+        $data['is_active'] = $request->boolean('is_active');
 
         if (! $request->filled('email')) {
             $data['email'] = '';
