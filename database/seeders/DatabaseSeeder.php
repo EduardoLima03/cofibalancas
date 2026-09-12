@@ -11,11 +11,13 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::factory()->admin()->create([
+        User::create([
             'name' => 'Administrador',
             'username' => 'admin',
             'email' => 'admin@admin.com',
             'password' => 'admin123',
+            'role' => 'admin',
+            'is_active' => true,
         ]);
 
         $loja1 = Loja::create([
@@ -57,20 +59,24 @@ class DatabaseSeeder extends Seeder
             'tolerancia_kg' => 0.300,
         ]);
 
-        $gerente = User::factory()->gerente()->create([
+        User::create([
             'name' => 'Gerente Centro',
             'username' => 'gerente',
             'email' => 'gerente@gerente.com',
             'password' => 'gerente123',
+            'role' => 'gerente',
             'loja_id' => $loja1->id,
+            'is_active' => true,
         ]);
 
-        $coletor = User::factory()->create([
+        User::create([
             'name' => 'Coletor Centro',
             'username' => 'coletor',
             'email' => 'coletor@coletor.com',
             'password' => 'coletor123',
+            'role' => 'coletor',
             'loja_id' => $loja1->id,
+            'is_active' => true,
         ]);
     }
 }
