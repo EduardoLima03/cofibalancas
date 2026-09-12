@@ -32,7 +32,7 @@ class LojaController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $data['is_active'] = $request->boolean('is_active', true);
+        $data['is_active'] = $request->boolean('is_active');
 
         Loja::create($data);
 
@@ -62,7 +62,7 @@ class LojaController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $data['is_active'] = $request->boolean('is_active', true);
+        $data['is_active'] = $request->boolean('is_active');
 
         $loja->update($data);
 
