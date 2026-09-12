@@ -171,47 +171,24 @@ class ConferenciaController extends Controller
 
         $titulo = '[Conferência de Peso] ' . $loja->nome . ' - diferença de ' . $diferencaText . ' kg';
 
-        $marcaModelo = trim(
-            implode(' / ', array_filter([$balanca->marca, $balanca->modelo])),
-            ' /'
-        );
-
-        $toleranciaText = number_format($balanca->tolerancia_kg, 3, ',', '.');
         $variacaoText = number_format($item->peso_esperado > 0 ? ($item->diferenca / $item->peso_esperado) * 100 : 0, 2, ',', '.') . '%';
 
-        $descricao = "Foi detectada uma diferença de **{$diferencaText} kg** na balança **{$balanca->nome}**"
-            . " (loja **{$loja->nome}**), fora da tolerância permitida de **{$toleranciaText} kg**.\n\n";
-
-        $descricao .= "**Balança**\n"
+        $descricao = "Foi detectada uma diferença de {$diferencaText} kg na balança {$balanca->nome}(loja {$loja->nome})\n"
+            . "Balança\n"
             . "- Nome: {$balanca->nome}\n";
-
-        if ($marcaModelo) {
-            $descricao .= "- Marca/Modelo: {$marcaModelo}\n";
-        }
 
         if ($balanca->serial) {
             $descricao .= "- Serial: {$balanca->serial}\n";
         }
 
-        $descricao .= "\n**Conferência**\n"
-            . "- Data: {$conferencia->data_conferencia->format('d/m/Y H:i')}\n";
-
-        if ($item->descricao_item) {
-            $descricao .= "- Item: {$item->descricao_item}\n";
-        }
-
-        $descricao .= "- Coletado por: {$conferencia->user->name}\n";
-
-        $descricao .= "\n**Pesos (kg)**\n"
+        $descricao .= "\nConferência\n"
+            . "- Data: {$conferencia->data_conferencia->format('d/m/Y H:i')}\n"
+            . "- Coletado por: {$conferencia->user->name}\n"
+            . "\nPesos (kg)\n"
             . "- Esperado: {$pesoEsperadoText}\n"
             . "- Real: {$pesoRealText}\n"
             . "- Diferença: {$diferencaText}\n"
-            . "- Tolerância permitida: {$toleranciaText}\n"
             . "- Variação: {$variacaoText}\n";
-
-        if ($item->observacao) {
-            $descricao .= "\n**Observação**\n{$item->observacao}\n";
-        }
 
         $payload = [
             'name' => $titulo,
