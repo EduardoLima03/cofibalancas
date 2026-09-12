@@ -14,6 +14,11 @@
         body {
             min-height: 100vh;
             background: #f4f6f9;
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1 0 auto;
         }
         .app-header {
             background: #155f4a;
@@ -231,6 +236,14 @@
 
         @yield('content')
     </main>
+
+    <footer class="footer mt-auto py-3 text-center">
+        <small class="text-muted">
+            {{ config('app.name') }} v{{ config('app.version') }} &middot;
+            Desenvolvido por
+            <a href="https://github.com/EduardoLima03" target="_blank" rel="noopener" class="text-muted">CL Dev</a>
+        </small>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     @stack('scripts')

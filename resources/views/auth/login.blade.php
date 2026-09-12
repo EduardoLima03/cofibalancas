@@ -88,5 +88,12 @@
             </form>
         </div>
     </div>
+    <footer class="mt-4 text-center">
+        <small class="text-light opacity-75">
+            {{ config('app.name') }} v{{ config('app.version') }} &middot;
+            Desenvolvido por
+            <a href="https://github.com/EduardoLima03" target="_blank" rel="noopener" class="text-light">CL Dev</a>
+        </small>
+    </footer>
 </body>
 </html>
