@@ -143,7 +143,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-6">
                             <label for="peso_esperado" class="form-label">Peso esperado (kg) <span class="text-danger">*</span></label>
-                            <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" class="form-control peso-input" id="peso_esperado" placeholder="0,000" required>
+                            <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" class="form-control peso-input" id="peso_esperado" value="10,000" placeholder="0,000" required>
                         </div>
                         <div class="col-6">
                             <label for="peso_real" class="form-label">Peso real (kg) <span class="text-danger">*</span></label>
