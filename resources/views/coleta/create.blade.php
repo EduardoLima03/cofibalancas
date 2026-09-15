@@ -236,7 +236,7 @@
             balancas.forEach(b => {
                 const opt = document.createElement('option');
                 opt.value = b.id;
-                opt.textContent = b.nome + (b.marca ? ' (' + b.marca + ')' : '');
+                opt.textContent = b.nome + (b.serial ? ' (' + b.serial + ')' : '');
                 opt.dataset.tolerancia = b.tolerancia_kg;
                 opt.dataset.capacidade = b.capacidade_kg;
                 balancaSelect.appendChild(opt);
