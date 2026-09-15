@@ -13,18 +13,20 @@ class RelatorioController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        $lojasIds = $user->lojasPermitidasIds();
 
         $lojas = Loja::where('is_active', true)
-            ->when($user->role !== 'admin', fn ($q) => $q->where('id', $user->loja_id))
+            ->whereIn('id', $lojasIds)
             ->orderBy('nome')
             ->get();
 
-        $lojaId = $request->get('loja_id', $user->role === 'admin' ? null : $user->loja_id);
+        $lojaId = $request->get('loja_id', $user->role === 'admin' ? null : $user->lojas->first()?->id);
         $dataInicio = $request->get('data_inicio') ?: Carbon::today()->subDays(30)->format('Y-m-d');
         $dataFim = $request->get('data_fim') ?: Carbon::today()->format('Y-m-d');
 
         $query = Conferencia::with(['loja', 'balanca', 'user', 'itens'])
             ->when($lojaId, fn ($q) => $q->where('loja_id', $lojaId))
+            ->whereIn('loja_id', $lojasIds)
             ->whereDate('data_conferencia', '>=', $dataInicio)
             ->whereDate('data_conferencia', '<=', $dataFim);
 
@@ -75,13 +77,20 @@ class RelatorioController extends Controller
     public function exportCsv(Request $request)
     {
         $user = Auth::user();
+        $lojasIds = $user->lojasPermitidasIds();
 
         $lojaId = $request->get('loja_id');
+
+        if ($lojaId && ! $user->podeAcessarLoja((int) $lojaId)) {
+            abort(403);
+        }
+
         $dataInicio = $request->get('data_inicio', Carbon::today()->subDays(30)->format('Y-m-d'));
         $dataFim = $request->get('data_fim', Carbon::today()->format('Y-m-d'));
 
         $conferencias = Conferencia::with(['loja', 'balanca', 'user'])
             ->when($lojaId, fn ($q) => $q->where('loja_id', $lojaId))
+            ->whereIn('loja_id', $lojasIds)
             ->whereDate('data_conferencia', '>=', $dataInicio)
             ->whereDate('data_conferencia', '<=', $dataFim)
             ->orderBy('data_conferencia')

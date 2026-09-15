@@ -42,7 +42,7 @@
                         <th>Nome</th>
                         <th>Usuário</th>
                         <th>Perfil</th>
-                        <th>Loja</th>
+                        <th>Lojas</th>
                         <th>Status</th>
                         <th class="text-end">Ações</th>
                     </tr>
@@ -57,7 +57,15 @@
                                 {{ ucfirst($user->role) }}
                             </span>
                         </td>
-                        <td class="small">{{ $user->loja?->nome ?? '—' }}</td>
+                        <td class="small">
+                            @if($user->role === 'admin')
+                                <span class="text-muted">Todas</span>
+                            @elseif($user->lojas->isEmpty())
+                                <span class="text-muted">—</span>
+                            @else
+                                {{ $user->lojas->pluck('nome')->join(', ') }}
+                            @endif
+                        </td>
                         <td>
                             <span class="badge bg-{{ $user->is_active ? 'success' : 'secondary' }}">
                                 {{ $user->is_active ? 'Ativo' : 'Inativo' }}

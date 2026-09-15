@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 
 class User extends Authenticatable
 {
@@ -20,7 +21,6 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'loja_id',
         'is_active',
     ];
 
@@ -37,9 +37,9 @@ class User extends Authenticatable
         ];
     }
 
-    public function loja(): BelongsTo
+    public function lojas(): BelongsToMany
     {
-        return $this->belongsTo(Loja::class);
+        return $this->belongsToMany(Loja::class)->withTimestamps();
     }
 
     public function conferencias(): HasMany
@@ -65,5 +65,23 @@ class User extends Authenticatable
     public function canManageAll(): bool
     {
         return $this->isAdmin();
+    }
+
+    public function podeAcessarLoja(int $lojaId): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return $this->lojas()->where('lojas.id', $lojaId)->exists();
+    }
+
+    public function lojasPermitidasIds(): Collection
+    {
+        if ($this->isAdmin()) {
+            return Loja::where('is_active', true)->pluck('id');
+        }
+
+        return $this->lojas()->pluck('lojas.id');
     }
 }

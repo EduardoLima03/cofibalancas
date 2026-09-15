@@ -13,14 +13,15 @@ class CalendarioController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        $lojasIds = $user->lojasPermitidasIds();
 
         $lojas = Loja::where('is_active', true)
-            ->when($user->role !== 'admin', fn ($q) => $q->where('id', $user->loja_id))
+            ->whereIn('id', $lojasIds)
             ->orderBy('nome')
             ->get();
 
         $mes = $request->get('mes', now()->format('Y-m'));
-        $lojaSelecionada = $request->get('loja_id', $user->role === 'admin' ? null : $user->loja_id);
+        $lojaSelecionada = $request->get('loja_id', $user->role === 'admin' ? null : $user->lojas->first()?->id);
 
         [$ano, $mesNum] = array_map('intval', explode('-', $mes));
 
@@ -37,6 +38,7 @@ class CalendarioController extends Controller
         $query = Conferencia::with('loja')
             ->whereYear('data_conferencia', $ano)
             ->whereMonth('data_conferencia', $mesNum)
+            ->whereIn('loja_id', $lojasIds)
             ->when($lojaSelecionada, fn ($q) => $q->where('loja_id', $lojaSelecionada))
             ->selectRaw('DATE(data_conferencia) as data, loja_id,
                 COUNT(*) as total,

@@ -75,10 +75,9 @@ class DatabaseSeeder extends Seeder
                 'email' => 'gerente@gerente.com',
                 'password' => 'gerente123',
                 'role' => 'gerente',
-                'loja_id' => $loja1->id,
                 'is_active' => true,
             ]
-        );
+        )->lojas()->sync([$loja1->id]);
 
         User::updateOrCreate(
             ['username' => 'coletor'],
@@ -87,9 +86,8 @@ class DatabaseSeeder extends Seeder
                 'email' => 'coletor@coletor.com',
                 'password' => 'coletor123',
                 'role' => 'coletor',
-                'loja_id' => $loja1->id,
                 'is_active' => true,
             ]
-        );
+        )->lojas()->sync([$loja1->id, $loja2->id]);
     }
 }
