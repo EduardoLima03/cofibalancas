@@ -37,16 +37,22 @@
                             <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin — acesso total</option>
                         </select>
                     </div>
-                    <div class="mb-3" id="campoLoja">
-                        <label for="loja_id" class="form-label">Loja <span class="text-danger">*</span></label>
-                        <select class="form-select" id="loja_id" name="loja_id">
-                            <option value="">Selecione...</option>
+                    <div class="mb-3" id="campoLojas">
+                        <label class="form-label">Lojas <span class="text-danger">*</span></label>
+                        <div class="border rounded p-2 bg-body" style="max-height:200px;overflow-y:auto;">
                             @foreach($lojas as $loja)
-                                <option value="{{ $loja->id }}" {{ old('loja_id') == $loja->id ? 'selected' : '' }}>{{ $loja->nome }}</option>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="lojas[]" value="{{ $loja->id }}" id="loja_{{ $loja->id }}"
+                                        {{ in_array((string) $loja->id, old('lojas', [])) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="loja_{{ $loja->id }}">{{ $loja->nome }}</label>
+                                </div>
                             @endforeach
-                        </select>
+                        </div>
+                        @error('lojas')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
                     </div>
-                    <div class="form-text mb-3" id="textoAdmin" class="d-none">O administrador tem acesso a todas as lojas.</div>
+                    <div class="form-text mb-3" id="textoAdmin">O administrador tem acesso a todas as lojas.</div>
                     <div class="row">
                         <div class="col-6 mb-3">
                             <label for="password" class="form-label">Senha <span class="text-danger">*</span></label>
@@ -76,21 +82,31 @@
 @push('scripts')
 <script>
     const roleSelect = document.getElementById('role');
-    const campoLoja = document.getElementById('campoLoja');
-    const lojaSelect = document.getElementById('loja_id');
+    const campoLojas = document.getElementById('campoLojas');
+    const checkboxes = document.querySelectorAll('input[name="lojas[]"]');
 
-    function atualizarCampoLoja() {
+    function atualizarCampoLojas() {
         if (roleSelect.value === 'admin') {
-            campoLoja.classList.add('d-none');
-            lojaSelect.removeAttribute('required');
-            lojaSelect.value = '';
+            campoLojas.classList.add('d-none');
+            checkboxes.forEach(cb => { cb.checked = false; cb.removeAttribute('required'); });
         } else {
-            campoLoja.classList.remove('d-none');
-            lojaSelect.setAttribute('required', 'required');
+            campoLojas.classList.remove('d-none');
+            checkboxes.forEach(cb => cb.setAttribute('required', 'required'));
         }
     }
 
-    roleSelect.addEventListener('change', atualizarCampoLoja);
-    atualizarCampoLoja();
+    roleSelect.addEventListener('change', atualizarCampoLojas);
+    atualizarCampoLojas();
+
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function () {
+        if (roleSelect.value !== 'admin') {
+            const checked = document.querySelectorAll('input[name="lojas[]"]:checked').length;
+            if (checked === 0) {
+                event.preventDefault();
+                alert('Selecione ao menos uma loja.');
+            }
+        }
+    });
 </script>
 @endpush

@@ -19,7 +19,7 @@ class ConferenciaController extends Controller
         $user = Auth::user();
 
         $lojas = Loja::where('is_active', true)
-            ->when($user->role !== 'admin', fn ($q) => $q->where('id', $user->loja_id))
+            ->whereIn('id', $user->lojasPermitidasIds())
             ->orderBy('nome')
             ->get();
 
@@ -28,7 +28,12 @@ class ConferenciaController extends Controller
 
     public function getBalancas(Request $request)
     {
+        $user = Auth::user();
         $lojaId = $request->get('loja_id');
+
+        if ($lojaId && ! $user->podeAcessarLoja((int) $lojaId)) {
+            abort(403);
+        }
 
         return response()->json(
             Balanca::where('loja_id', $lojaId)
@@ -99,7 +104,7 @@ class ConferenciaController extends Controller
         $balanca = Balanca::with('loja')->findOrFail($data['balanca_id']);
         $loja = $balanca->loja;
 
-        if ($user->role !== 'admin' && $loja->id !== $user->loja_id) {
+        if (! $user->podeAcessarLoja($loja->id)) {
             abort(403, 'Você não tem permissão para esta loja.');
         }
 
@@ -235,7 +240,7 @@ class ConferenciaController extends Controller
         $user = Auth::user();
 
         $conferencias = Conferencia::with(['loja', 'balanca', 'user'])
-            ->when($user->role !== 'admin', fn ($q) => $q->where('loja_id', $user->loja_id))
+            ->whereIn('loja_id', $user->lojasPermitidasIds())
             ->latest('data_conferencia')
             ->latest('id')
             ->paginate(20);
@@ -256,7 +261,7 @@ class ConferenciaController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin' && $conferencia->loja_id !== $user->loja_id) {
+        if (! $user->podeAcessarLoja($conferencia->loja_id)) {
             abort(403, 'Acesso negado.');
         }
     }

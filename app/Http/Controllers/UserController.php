@@ -15,8 +15,8 @@ class UserController extends Controller
 
         $lojas = Loja::orderBy('nome')->get();
 
-        $users = User::with('loja')
-            ->when($lojaId, fn ($q) => $q->where('loja_id', $lojaId))
+        $users = User::with('lojas')
+            ->when($lojaId, fn ($q) => $q->whereHas('lojas', fn ($ql) => $ql->where('lojas.id', $lojaId)))
             ->when($role, fn ($q) => $q->where('role', $role))
             ->orderBy('name')
             ->paginate(15)
@@ -40,23 +40,28 @@ class UserController extends Controller
             'email' => 'nullable|email|max:255|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:admin,gerente,coletor',
-            'loja_id' => 'nullable|exists:lojas,id',
+            'lojas' => 'nullable|array',
+            'lojas.*' => 'integer|exists:lojas,id',
             'is_active' => 'nullable|boolean',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
 
         if (! $request->filled('email')) {
-            $data['email'] = '';
+            $data['email'] = null;
         }
 
-        if ($data['role'] !== 'admin' && empty($data['loja_id'])) {
+        if ($data['role'] !== 'admin' && empty($request->input('lojas'))) {
             return back()->withErrors([
-                'loja_id' => 'A loja é obrigatória para ' . $data['role'] . ' e coletor.',
+                'lojas' => 'É necessário selecionar pelo menos uma loja.',
             ])->withInput();
         }
 
-        User::create($data);
+        $user = User::create($data);
+
+        if ($data['role'] !== 'admin') {
+            $user->lojas()->sync($request->input('lojas'));
+        }
 
         return redirect()->route('users.index')
             ->with('success', 'Usuário cadastrado com sucesso!');
@@ -77,19 +82,20 @@ class UserController extends Controller
             'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6|confirmed',
             'role' => 'required|in:admin,gerente,coletor',
-            'loja_id' => 'nullable|exists:lojas,id',
+            'lojas' => 'nullable|array',
+            'lojas.*' => 'integer|exists:lojas,id',
             'is_active' => 'nullable|boolean',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
 
         if (! $request->filled('email')) {
-            $data['email'] = '';
+            $data['email'] = null;
         }
 
-        if ($data['role'] !== 'admin' && empty($data['loja_id'])) {
+        if ($data['role'] !== 'admin' && empty($request->input('lojas'))) {
             return back()->withErrors([
-                'loja_id' => 'A loja é obrigatória para gerente e coletor.',
+                'lojas' => 'É necessário selecionar pelo menos uma loja.',
             ])->withInput();
         }
 
@@ -98,6 +104,12 @@ class UserController extends Controller
         }
 
         $user->update($data);
+
+        if ($data['role'] !== 'admin') {
+            $user->lojas()->sync($request->input('lojas'));
+        } else {
+            $user->lojas()->detach();
+        }
 
         return redirect()->route('users.index')
             ->with('success', 'Usuário atualizado com sucesso!');

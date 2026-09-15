@@ -13,13 +13,10 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $lojasIds = $user->lojasPermitidasIds();
 
         $query = Conferencia::query()->with(['loja', 'balanca', 'user']);
-
-        if ($user->role !== 'admin') {
-            $lojaId = $user->loja_id;
-            $query->where('loja_id', $lojaId);
-        }
+        $query->whereIn('loja_id', $lojasIds);
 
         $periodoInicio = Carbon::today()->subDays(30);
         $conferencias = clone $query;
@@ -30,12 +27,12 @@ class DashboardController extends Controller
         $totalReprovadas = $conferenciasPeriodo->where('status', 'reprovado')->count();
 
         $totalLojas = Loja::query()
-            ->when($user->role !== 'admin', fn ($q) => $q->where('id', $user->loja_id))
+            ->whereIn('id', $lojasIds)
             ->where('is_active', true)
             ->count();
 
         $totalBalancas = Balanca::query()
-            ->when($user->role !== 'admin', fn ($q) => $q->where('loja_id', $user->loja_id))
+            ->whereIn('loja_id', $lojasIds)
             ->where('is_active', true)
             ->count();
 
@@ -46,14 +43,14 @@ class DashboardController extends Controller
             ->get();
 
         $conferenciasPorLoja = Conferencia::query()
-            ->when($user->role !== 'admin', fn ($q) => $q->where('loja_id', $user->loja_id))
+            ->whereIn('loja_id', $lojasIds)
             ->selectRaw('loja_id, COUNT(*) as total, SUM(status = "aprovado") as aprovadas, SUM(status = "reprovado") as reprovadas')
             ->groupBy('loja_id')
             ->with('loja')
             ->get();
 
         $conferenciasPorDia = Conferencia::query()
-            ->when($user->role !== 'admin', fn ($q) => $q->where('loja_id', $user->loja_id))
+            ->whereIn('loja_id', $lojasIds)
             ->whereDate('data_conferencia', '>=', $periodoInicio)
             ->selectRaw('DATE(data_conferencia) as data, COUNT(*) as total')
             ->groupBy('data')
