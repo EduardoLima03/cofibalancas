@@ -32,7 +32,8 @@ class CalendarioController extends Controller
         $totalCelulas = ceil(($offset + $diasNoMes) / 7) * 7;
 
         for ($i = 0; $i < $totalCelulas; $i++) {
-            $dias[] = $i < $offset ? null : $i - $offset + 1;
+            $dia = $i - $offset + 1;
+            $dias[] = ($i < $offset || $dia > $diasNoMes) ? null : $dia;
         }
 
         $query = Conferencia::with('loja')
