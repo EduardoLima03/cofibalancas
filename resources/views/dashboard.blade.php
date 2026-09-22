@@ -55,6 +55,66 @@
     </div>
 </div>
 
+@if($totalAfericoesReprovadas > 0)
+<div class="alert alert-danger alert-dismissible fade show alert-tolerancia mb-4" role="alert">
+    <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+        <div>
+            <strong>{{ $totalAfericoesReprovadas }} aferição(ões) de temperatura reprovada(s)</strong> nos últimos 30 dias.
+            <a href="{{ route('temperatura.historico') }}" class="alert-link">Ver histórico</a>.
+        </div>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+    </div>
+</div>
+@endif
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-thermometer-half"></i></div>
+                <div>
+                    <div class="h4 mb-0">{{ $totalAfericoes }}</div>
+                    <div class="small text-muted">Aferições de temp. (30d)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-check-circle"></i></div>
+                <div>
+                    <div class="h4 mb-0">{{ $totalAfericoesAprovadas }}</div>
+                    <div class="small text-muted">Aferições aprovadas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-exclamation-triangle"></i></div>
+                <div>
+                    <div class="h4 mb-0">{{ $totalAfericoesReprovadas }}</div>
+                    <div class="small text-muted">Aferições reprovadas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-info bg-opacity-10 text-info"><i class="bi bi-snow2"></i></div>
+                <div>
+                    <div class="h4 mb-0">{{ $totalEquipamentos }}</div>
+                    <div class="small text-muted">Equipamentos de frio ativos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-3">
     <div class="col-lg-7">
         <div class="card">
@@ -149,6 +209,84 @@
                     @endforeach
                 </div>
                 <div class="small text-muted mt-2">Total de conferências por dia (últimos 30 dias).</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Últimas aferições de temperatura</span>
+                @if(auth()->user()->role !== 'coletor')
+                    <a href="{{ route('temperatura.historico') }}" class="btn btn-sm btn-outline-primary">Ver histórico</a>
+                @endif
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Data</th>
+                                <th>Loja</th>
+                                <th>Equipamento</th>
+                                <th class="text-end">Temperatura</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($ultimasAfericoes as $a)
+                            <tr>
+                                <td class="small">{{ $a->data_afericao->format('d/m/Y H:i') }}</td>
+                                <td>{{ $a->loja?->nome }}</td>
+                                <td class="small">{{ $a->equipamento?->nome ?? '—' }}</td>
+                                <td class="text-end small fw-semibold">{{ number_format($a->temperatura_lida, 1, ',', '.') }} °C</td>
+                                <td>
+                                    <span class="badge bg-{{ $a->status_color }}">
+                                        <i class="bi {{ $a->status == 'aprovado' ? 'bi-check-circle' : 'bi-x-circle' }} me-1"></i>
+                                        {{ $a->status_label }}
+                                    </span>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="5" class="text-center text-muted py-4">Nenhuma aferição de temperatura realizada.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">Aferições por loja</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Loja</th>
+                                <th class="text-center">Aprov.</th>
+                                <th class="text-center">Reprov.</th>
+                                <th class="text-center">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($afericoesPorLoja as $l)
+                            <tr>
+                                <td>{{ $l['loja']?->nome }}</td>
+                                <td class="text-center text-success">{{ $l['aprovadas'] }}</td>
+                                <td class="text-center text-danger">{{ $l['reprovadas'] }}</td>
+                                <td class="text-center fw-semibold">{{ $l['total'] }}</td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="4" class="text-center text-muted py-3">Sem dados.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

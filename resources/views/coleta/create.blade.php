@@ -451,6 +451,13 @@
         document.getElementById('resultadoCard').innerHTML = html;
     }
 
+    function fecharModalGlpi() {
+        const inst = bootstrap.Modal.getInstance(document.getElementById('modalGlpi'));
+        if (inst) {
+            inst.hide();
+        }
+    }
+
     async function salvarConferencia(abrirChamado) {
         const btn = abrirChamado ? document.getElementById('btnAbrirChamado') : null;
         if (btn) {
@@ -472,7 +479,7 @@
             const data = await reqJson(rotaStore, form);
 
             if (data.success) {
-                bootstrap.Modal.getInstance(document.getElementById('modalGlpi')).hide();
+                fecharModalGlpi();
                 mostrarResultadoFinal(data);
             } else {
                 alert(data.message || 'Erro ao salvar a conferência.');
@@ -533,7 +540,7 @@
     });
 
     document.getElementById('btnSemChamado').addEventListener('click', function () {
-        bootstrap.Modal.getInstance(document.getElementById('modalGlpi')).hide();
+        fecharModalGlpi();
         salvarConferencia(0);
     });
 

@@ -47,6 +47,11 @@ class User extends Authenticatable
         return $this->hasMany(Conferencia::class);
     }
 
+    public function afericoesTemperatura(): HasMany
+    {
+        return $this->hasMany(AfericaoTemperatura::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

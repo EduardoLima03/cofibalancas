@@ -58,6 +58,7 @@
             <span><span class="badge bg-success me-1">&nbsp;</span> Todos aprovados</span>
             <span><span class="badge bg-warning me-1">&nbsp;</span> Com ressalva</span>
             <span><span class="badge bg-danger me-1">&nbsp;</span> Fora da tolerância</span>
+            <span><i class="bi bi-thermometer-half text-danger me-1"></i> Aferição de temperatura</span>
         </div>
 
         <div class="row g-2 mb-2 d-none d-md-flex">
@@ -93,6 +94,14 @@
                                             </span>
                                         </div>
                                     @endif
+                                    @if($resumo && $resumo['afericoes'] > 0)
+                                        <div class="cal-badge d-block mt-1">
+                                            <i class="bi {{ $resumo['afericoes_reprovadas'] > 0 ? 'bi-thermometer-snow text-danger' : 'bi-thermometer-half text-success' }}"></i>
+                                            <span class="badge bg-{{ $resumo['afericoes_reprovadas'] > 0 ? 'danger' : 'success' }}">
+                                                {{ $resumo['afericoes'] }}
+                                            </span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </a>
@@ -106,16 +115,16 @@
                                 <div class="modal-header">
                                     <h5 class="modal-title">
                                         {{ $dia }} de {{ $nomeMes }} {{ $ano }} — {{ $resumo['total'] }} conferência(s)
+                                        @if($resumo['afericoes'] > 0) · {{ $resumo['afericoes'] }} aferição(ões) @endif
                                     </h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body p-0">
                                     @php
-                                        $consultaDia = \App\Models\Conferencia::with(['loja', 'balanca', 'user'])
-                                            ->whereDate('data_conferencia', $dataKey)
-                                            ->where('loja_id', $lojaSelecionada)
-                                            ->get();
+                                        $consultasDia = $conferenciasPorData[$dataKey] ?? collect();
+                                        $afericoesDiaModal = $afericoesPorData[$dataKey] ?? collect();
                                     @endphp
+                                    <div class="px-3 py-2 bg-light border-bottom fw-semibold small text-uppercase text-muted">Conferências</div>
                                     <div class="table-responsive">
                                         <table class="table table-sm align-middle mb-0">
                                             <thead class="table-light">
@@ -128,7 +137,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @forelse($consultaDia as $c)
+                                                @forelse($consultasDia as $c)
                                                 <tr>
                                                     <td class="small">{{ $c->created_at->format('H:i') }}</td>
                                                     <td class="small">{{ $c->balanca?->nome}}</td>
@@ -138,6 +147,35 @@
                                                 </tr>
                                                 @empty
                                                 <tr><td colspan="5" class="text-center text-muted py-3">Sem conferências.</td></tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="px-3 py-2 bg-light border-top border-bottom fw-semibold small text-uppercase text-muted">Aferições de temperatura</div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Hora</th>
+                                                    <th>Equipamento</th>
+                                                    <th class="text-end">Temp. lida</th>
+                                                    <th>Faixa</th>
+                                                    <th class="text-end">Desvio</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @forelse($afericoesDiaModal as $a)
+                                                <tr>
+                                                    <td class="small">{{ $a->data_afericao->format('H:i') }}</td>
+                                                    <td class="small">{{ $a->equipamento?->nome }}</td>
+                                                    <td class="text-end small fw-semibold">{{ number_format($a->temperatura_lida, 1, ',', '.') }} °C</td>
+                                                    <td class="small">{{ $a->faixa_label }}</td>
+                                                    <td class="text-end small">{{ number_format($a->desvio, 2, ',', '.') }} °C</td>
+                                                    <td><span class="badge bg-{{ $a->status_color }}">{{ $a->status_label }}</span></td>
+                                                </tr>
+                                                @empty
+                                                <tr><td colspan="6" class="text-center text-muted py-3">Sem aferições de temperatura.</td></tr>
                                                 @endforelse
                                             </tbody>
                                         </table>
@@ -176,6 +214,41 @@
                                 <td class="small">{{ $c->itens->first()?->descricao_item ?? '—' }}</td>
                                 <td class="text-end small fw-semibold">{{ number_format($c->diferenca, 3, ',', '.') }} kg</td>
                                 <td><span class="badge bg-{{ $c->status_color }}">{{ $c->status_label }}</span></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @endif
+        @if($afericoesDia && $afericoesDia->isNotEmpty())
+        <div class="card mt-3">
+            <div class="card-header">
+                Aferições de temperatura em {{ $detalhesDia }}/{{ $mesNum }}/{{ $ano }}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Hora</th>
+                                <th>Equipamento</th>
+                                <th class="text-end">Temp. lida</th>
+                                <th>Faixa</th>
+                                <th class="text-end">Desvio</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($afericoesDia as $a)
+                            <tr>
+                                <td class="small">{{ $a->data_afericao->format('H:i') }}</td>
+                                <td class="small">{{ $a->equipamento?->nome }}</td>
+                                <td class="text-end small fw-semibold">{{ number_format($a->temperatura_lida, 1, ',', '.') }} °C</td>
+                                <td class="small">{{ $a->faixa_label }}</td>
+                                <td class="text-end small">{{ number_format($a->desvio, 2, ',', '.') }} °C</td>
+                                <td><span class="badge bg-{{ $a->status_color }}">{{ $a->status_label }}</span></td>
                             </tr>
                             @endforeach
                         </tbody>

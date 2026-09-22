@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AfericaoTemperatura;
 use App\Models\Conferencia;
 use App\Models\Loja;
 use Carbon\Carbon;
@@ -61,6 +62,33 @@ class RelatorioController extends Controller
             ->latest('data_conferencia')
             ->get();
 
+        $queryAfericoes = AfericaoTemperatura::with(['loja', 'equipamento', 'user'])
+            ->when($lojaId, fn ($q) => $q->where('loja_id', $lojaId))
+            ->whereIn('loja_id', $lojasIds)
+            ->whereDate('data_afericao', '>=', $dataInicio)
+            ->whereDate('data_afericao', '<=', $dataFim);
+
+        $afericoes = (clone $queryAfericoes)->latest('data_afericao')->get();
+
+        $afericoesResumo = (clone $queryAfericoes)
+            ->selectRaw('COUNT(*) as total,
+                SUM(status = "aprovado") as aprovadas,
+                SUM(status = "reprovado") as reprovadas')
+            ->first();
+
+        $afericoesPorEquipamento = (clone $queryAfericoes)
+            ->selectRaw('equipamento_id, COUNT(*) as total,
+                SUM(status = "aprovado") as aprovadas,
+                SUM(status = "reprovado") as reprovadas')
+            ->groupBy('equipamento_id')
+            ->with('equipamento')
+            ->get();
+
+        $afericoesReprovadas = (clone $queryAfericoes)
+            ->where('status', 'reprovado')
+            ->latest('data_afericao')
+            ->get();
+
         return view('relatorios.index', compact(
             'lojas',
             'lojaId',
@@ -70,7 +98,11 @@ class RelatorioController extends Controller
             'resumo',
             'porLoja',
             'porBalanca',
-            'reprovadas'
+            'reprovadas',
+            'afericoes',
+            'afericoesResumo',
+            'afericoesPorEquipamento',
+            'afericoesReprovadas'
         ));
     }
 
@@ -130,6 +162,67 @@ class RelatorioController extends Controller
         $content = "\xEF\xBB\xBF" . $content;
 
         $nomeArquivo = 'conferencias_' . $dataInicio . '_' . $dataFim . '.csv';
+
+        return response($content)
+            ->header('Content-Type', 'text/csv; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $nomeArquivo . '"');
+    }
+
+    public function exportCsvTemperatura(Request $request)
+    {
+        $user = Auth::user();
+        $lojasIds = $user->lojasPermitidasIds();
+
+        $lojaId = $request->get('loja_id');
+
+        if ($lojaId && ! $user->podeAcessarLoja((int) $lojaId)) {
+            abort(403);
+        }
+
+        $dataInicio = $request->get('data_inicio', Carbon::today()->subDays(30)->format('Y-m-d'));
+        $dataFim = $request->get('data_fim', Carbon::today()->format('Y-m-d'));
+
+        $afericoes = AfericaoTemperatura::with(['loja', 'equipamento', 'user'])
+            ->when($lojaId, fn ($q) => $q->where('loja_id', $lojaId))
+            ->whereIn('loja_id', $lojasIds)
+            ->whereDate('data_afericao', '>=', $dataInicio)
+            ->whereDate('data_afericao', '<=', $dataFim)
+            ->orderBy('data_afericao')
+            ->get();
+
+        $output = fopen('php://temp', 'w');
+
+        fputcsv($output, [
+            'Data', 'Hora', 'Loja', 'Equipamento', 'Tipo', 'Colaborador',
+            'Temperatura (°C)', 'Faixa Mín. (°C)', 'Faixa Máx. (°C)',
+            'Desvio (°C)', 'Tolerância (°C)', 'Status', 'Observação',
+        ], ';');
+
+        foreach ($afericoes as $a) {
+            fputcsv($output, [
+                $a->data_afericao->format('d/m/Y'),
+                $a->data_afericao->format('H:i'),
+                $a->loja?->nome,
+                $a->equipamento?->nome,
+                $a->equipamento?->tipo_label,
+                $a->user?->name,
+                number_format($a->temperatura_lida, 1, ',', '.'),
+                $a->temp_min_usada !== null ? number_format($a->temp_min_usada, 1, ',', '.') : '—',
+                number_format($a->temp_max_usada ?? 0, 1, ',', '.'),
+                number_format($a->desvio, 2, ',', '.'),
+                number_format($a->tolerancia_usada, 2, ',', '.'),
+                $a->status_label,
+                $a->observacao,
+            ], ';');
+        }
+
+        rewind($output);
+        $content = stream_get_contents($output);
+        fclose($output);
+
+        $content = "\xEF\xBB\xBF" . $content;
+
+        $nomeArquivo = 'afericoes_temperatura_' . $dataInicio . '_' . $dataFim . '.csv';
 
         return response($content)
             ->header('Content-Type', 'text/csv; charset=UTF-8')

@@ -43,4 +43,14 @@ class Loja extends Model
     {
         return $this->balancas()->where('is_active', true);
     }
+
+    public function equipamentosFrio(): HasMany
+    {
+        return $this->hasMany(EquipamentoFrio::class);
+    }
+
+    public function afericoesTemperatura(): HasMany
+    {
+        return $this->hasMany(AfericaoTemperatura::class);
+    }
 }

@@ -185,4 +185,123 @@
     </div>
 </div>
 @endif
+
+@php
+    $aTotalGeral = $afericoesResumo->total ?? 0;
+    $aTotalAprovadas = $afericoesResumo->aprovadas ?? 0;
+    $aTotalReprovadas = $afericoesResumo->reprovadas ?? 0;
+    $aTaxaAprovacao = $aTotalGeral > 0 ? ($aTotalAprovadas / $aTotalGeral) * 100 : 0;
+@endphp
+
+<h5 class="fw-semibold mt-4 mb-3"><i class="bi bi-thermometer-half me-2"></i>Aferições de Temperatura</h5>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="h4 mb-0">{{ $aTotalGeral }}</div>
+                <div class="small text-muted">Total</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="h4 mb-0 text-success">{{ $aTotalAprovadas }}</div>
+                <div class="small text-muted">Aprovadas</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="h4 mb-0 text-danger">{{ $aTotalReprovadas }}</div>
+                <div class="small text-muted">Fora da tolerância</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="h4 mb-0 text-primary">{{ number_format($aTaxaAprovacao, 1, ',', '.') }}%</div>
+                <div class="small text-muted">Taxa de aprovação</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Por equipamento</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Equipamento</th>
+                                <th class="text-center">Aprov.</th>
+                                <th class="text-center">Reprov.</th>
+                                <th class="text-center">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($afericoesPorEquipamento as $eq)
+                            <tr>
+                                <td>{{ $eq->equipamento?->nome ?? '—' }}</td>
+                                <td class="text-center text-success">{{ $eq->aprovadas }}</td>
+                                <td class="text-center text-danger">{{ $eq->reprovadas }}</td>
+                                <td class="text-center fw-semibold">{{ $eq->total }}</td>
+                            </tr>
+                            @endforeach
+                            @if($afericoesPorEquipamento->isEmpty())
+                            <tr><td colspan="4" class="text-center text-muted py-3">Sem dados no período.</td></tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="d-flex justify-content-end mb-2">
+            <a href="{{ route('relatorios.exportTemperatura', ['loja_id' => $lojaId, 'data_inicio' => $dataInicio, 'data_fim' => $dataFim]) }}" class="btn btn-sm btn-success">
+                <i class="bi bi-file-earmark-excel me-1"></i>CSV Temperatura
+            </a>
+        </div>
+        @if($afericoesReprovadas->isNotEmpty())
+        <div class="card">
+            <div class="card-header">Aferições fora da tolerância</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Data</th>
+                                <th>Loja</th>
+                                <th>Equipamento</th>
+                                <th class="text-end">Lida</th>
+                                <th class="text-end">Desvio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($afericoesReprovadas as $a)
+                            <tr>
+                                <td class="small">{{ $a->data_afericao->format('d/m/Y H:i') }}</td>
+                                <td>{{ $a->loja?->nome }}</td>
+                                <td class="small">{{ $a->equipamento?->nome ?? '—' }}</td>
+                                <td class="text-end small fw-semibold text-danger">{{ number_format($a->temperatura_lida, 1, ',', '.') }} °C</td>
+                                <td class="text-end small fw-semibold text-danger">{{ number_format($a->desvio, 2, ',', '.') }} °C</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @else
+        <div class="text-center text-muted py-4">Nenhuma aferição reprovada no período.</div>
+        @endif
+    </div>
+</div>
 @endsection

@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AfericaoTemperaturaController;
 use App\Http\Controllers\BalancaController;
 use App\Http\Controllers\CalendarioController;
 use App\Http\Controllers\ConferenciaController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EquipamentoFrioController;
 use App\Http\Controllers\LojaController;
 use App\Http\Controllers\GlpiConfigController;
 use App\Http\Controllers\RelatorioController;
@@ -31,8 +33,16 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/calendario', [CalendarioController::class, 'index'])->name('calendario');
 
+        Route::get('/temperatura', [AfericaoTemperaturaController::class, 'create'])->name('temperatura.create');
+        Route::get('/temperatura/equipamentos', [AfericaoTemperaturaController::class, 'getEquipamentos'])->name('temperatura.equipamentos');
+        Route::post('/temperatura/preview', [AfericaoTemperaturaController::class, 'preview'])->name('temperatura.preview');
+        Route::post('/temperatura', [AfericaoTemperaturaController::class, 'store'])->name('temperatura.store');
+        Route::get('/temperatura/historico', [AfericaoTemperaturaController::class, 'historico'])->name('temperatura.historico');
+        Route::get('/temperatura/{afericao}', [AfericaoTemperaturaController::class, 'show'])->name('temperatura.show');
+
         Route::get('/relatorios', [RelatorioController::class, 'index'])->name('relatorios.index');
         Route::get('/relatorios/exportar', [RelatorioController::class, 'exportCsv'])->name('relatorios.export');
+        Route::get('/relatorios/exportar/temperatura', [RelatorioController::class, 'exportCsvTemperatura'])->name('relatorios.exportTemperatura');
     });
 
     Route::middleware(['role:coletor'])->group(function () {
@@ -41,11 +51,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/coletor/coleta/preview', [ConferenciaController::class, 'preview'])->name('coletor.preview');
         Route::post('/coletor/coleta', [ConferenciaController::class, 'store'])->name('coletor.store');
         Route::get('/coletor/coleta/{conferencia}', [ConferenciaController::class, 'show'])->name('coletor.show');
+
+        Route::get('/coletor/temperatura', [AfericaoTemperaturaController::class, 'create'])->name('coletor.temperatura');
+        Route::get('/coletor/temperatura/equipamentos', [AfericaoTemperaturaController::class, 'getEquipamentos'])->name('coletor.temperatura.equipamentos');
+        Route::post('/coletor/temperatura/preview', [AfericaoTemperaturaController::class, 'preview'])->name('coletor.temperatura.preview');
+        Route::post('/coletor/temperatura', [AfericaoTemperaturaController::class, 'store'])->name('coletor.temperatura.store');
+        Route::get('/coletor/temperatura/{afericao}', [AfericaoTemperaturaController::class, 'show'])->name('coletor.temperatura.show');
     });
 
     Route::middleware(['role:admin'])->group(function () {
         Route::resource('lojas', LojaController::class);
         Route::resource('balancas', BalancaController::class)->except(['show']);
+        Route::resource('equipamentos', EquipamentoFrioController::class)->except(['show']);
         Route::resource('users', UserController::class);
 
         Route::get('/configuracoes/glpi', [GlpiConfigController::class, 'index'])->name('glpi.config');

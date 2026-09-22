@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AfericaoTemperatura;
 use App\Models\Balanca;
 use App\Models\Conferencia;
+use App\Models\EquipamentoFrio;
 use App\Models\Loja;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -36,6 +38,11 @@ class DashboardController extends Controller
             ->where('is_active', true)
             ->count();
 
+        $totalEquipamentos = EquipamentoFrio::query()
+            ->whereIn('loja_id', $lojasIds)
+            ->where('is_active', true)
+            ->count();
+
         $ultimasConferencias = $conferencias
             ->latest('data_conferencia')
             ->latest('id')
@@ -57,15 +64,43 @@ class DashboardController extends Controller
             ->orderBy('data')
             ->get();
 
+        $afericoesPeriodo = AfericaoTemperatura::query()
+            ->with(['loja', 'equipamento', 'user'])
+            ->whereIn('loja_id', $lojasIds)
+            ->whereDate('data_afericao', '>=', $periodoInicio)
+            ->get();
+
+        $totalAfericoes = $afericoesPeriodo->count();
+        $totalAfericoesAprovadas = $afericoesPeriodo->where('status', 'aprovado')->count();
+        $totalAfericoesReprovadas = $afericoesPeriodo->where('status', 'reprovado')->count();
+
+        $ultimasAfericoes = $afericoesPeriodo->sortByDesc('data_afericao')->take(5)->values();
+
+        $afericoesPorLoja = $afericoesPeriodo
+            ->groupBy('loja_id')
+            ->map(fn ($grupo) => [
+                'loja' => $grupo->first()->loja,
+                'total' => $grupo->count(),
+                'aprovadas' => $grupo->where('status', 'aprovado')->count(),
+                'reprovadas' => $grupo->where('status', 'reprovado')->count(),
+            ])
+            ->values();
+
         return view('dashboard', compact(
             'totalConferencias',
             'totalAprovadas',
             'totalReprovadas',
             'totalLojas',
             'totalBalancas',
+            'totalEquipamentos',
             'ultimasConferencias',
             'conferenciasPorLoja',
-            'conferenciasPorDia'
+            'conferenciasPorDia',
+            'totalAfericoes',
+            'totalAfericoesAprovadas',
+            'totalAfericoesReprovadas',
+            'ultimasAfericoes',
+            'afericoesPorLoja'
         ));
     }
 }

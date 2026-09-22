@@ -157,16 +157,14 @@
                         </a>
                     </li>
                     @if(auth()->user()->role === 'admin' || auth()->user()->role === 'gerente')
-                        @if(auth()->user()->role === 'admin')
-                            <li class="nav-item"><a class="nav-link {{ request()->segment(1) === 'coleta' ? 'active' : '' }}" href="{{ route('coleta.create') }}"><i class="bi bi-clipboard2-check me-1"></i> Coleta</a></li>
-                        @else
-                            <li class="nav-item"><a class="nav-link {{ request()->segment(1) === 'coleta' ? 'active' : '' }}" href="{{ route('coleta.create') }}"><i class="bi bi-clipboard2-check me-1"></i> Coleta</a></li>
-                        @endif
+                        <li class="nav-item"><a class="nav-link {{ request()->segment(1) === 'coleta' ? 'active' : '' }}" href="{{ route('coleta.create') }}"><i class="bi bi-clipboard2-check me-1"></i> Coleta</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->segment(1) === 'temperatura' ? 'active' : '' }}" href="{{ route('temperatura.create') }}"><i class="bi bi-thermometer-half me-1"></i> Aferição de Temp.</a></li>
                         <li class="nav-item"><a class="nav-link {{ request()->routeIs('calendario') ? 'active' : '' }}" href="{{ route('calendario') }}"><i class="bi bi-calendar3 me-1"></i> Calendário</a></li>
                         <li class="nav-item"><a class="nav-link {{ request()->routeIs('relatorios.*') ? 'active' : '' }}" href="{{ route('relatorios.index') }}"><i class="bi bi-graph-up me-1"></i> Relatórios</a></li>
                     @endif
                     @if(auth()->user()->role === 'coletor')
-                        <li class="nav-item"><a class="nav-link {{ request()->segment(1) === 'coletor' ? 'active' : '' }}" href="{{ route('coletor.coleta') }}"><i class="bi bi-clipboard2-check me-1"></i> Coleta</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->segment(2) === 'coleta' ? 'active' : '' }}" href="{{ route('coletor.coleta') }}"><i class="bi bi-clipboard2-check me-1"></i> Coleta</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->segment(2) === 'temperatura' ? 'active' : '' }}" href="{{ route('coletor.temperatura') }}"><i class="bi bi-thermometer-half me-1"></i> Aferição de Temp.</a></li>
                     @endif
                     @if(auth()->user()->role === 'admin')
                         <li class="nav-item dropdown">
@@ -176,6 +174,7 @@
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item {{ request()->routeIs('lojas.*') ? 'active' : '' }}" href="{{ route('lojas.index') }}"><i class="bi bi-shop me-2"></i>Lojas</a></li>
                                 <li><a class="dropdown-item {{ request()->routeIs('balancas.*') ? 'active' : '' }}" href="{{ route('balancas.index') }}"><i class="bi bi-basket2 me-2"></i>Balancas</a></li>
+                                <li><a class="dropdown-item {{ request()->routeIs('equipamentos.*') ? 'active' : '' }}" href="{{ route('equipamentos.index') }}"><i class="bi bi-snow2 me-2"></i>Equipamentos de Frio</a></li>
                                 <li><a class="dropdown-item {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}"><i class="bi bi-people me-2"></i>Usuários</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item {{ request()->routeIs('glpi.*') ? 'active' : '' }}" href="{{ route('glpi.config') }}"><i class="bi bi-plug me-2"></i>Configuração GLPI</a></li>
